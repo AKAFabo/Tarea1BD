@@ -5,6 +5,8 @@ $conn = sqlsrv_connect("FABO\SQLEXPRESS01", $connectionInfo);
 
 if ($conn){
     echo("Servidor conectado");
+    header("Location: index.html");
+    exit();
 } else {
     die("d");
 }
