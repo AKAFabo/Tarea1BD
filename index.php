@@ -8,12 +8,13 @@ if (!$conn) {
 }
 
 // Consulta para obtener los empleados
-$sql = "SELECT Id, Nombre, Salario FROM Empleado";  
+$sql = "EXEC dbo.sp_get_empleados"; 
 $result = sqlsrv_query($conn, $sql);
 
 // Verificar si hay resultados
-if (!$result) {
-    die("Error en la consulta");
+if ($result === false) {
+    // Capturar y mostrar el error si la consulta falla
+    die(print_r(sqlsrv_errors(), true));
 }
 
 ?>
