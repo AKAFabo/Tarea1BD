@@ -1,7 +1,7 @@
 <?php
 // Establecer conexión a la base de datos
 $connectionInfo = array("Database" => "Tarea1Bases");
-$conn = sqlsrv_connect("FABO\SQLEXPRESS01", $connectionInfo);
+$conn = sqlsrv_connect("", $connectionInfo);
 
 if (!$conn) {
     die("Error en la conexión a la base de datos");
@@ -11,18 +11,70 @@ if (!$conn) {
 $sql = "EXEC dbo.sp_get_empleados"; 
 $result = sqlsrv_query($conn, $sql);
 
-// Verificar si hay resultados
 if ($result === false) {
-    // Capturar y mostrar el error si la consulta falla
     die(print_r(sqlsrv_errors(), true));
 }
-
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Lista de Empleados</title>
+    <script>
+        function abrirModal() {
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function insertarEmpleado() {
+            var nombre = document.getElementById("nombre").value;
+            var salario = document.getElementById("salario").value;
+
+            if (nombre.trim() === "" || salario.trim() === "") {
+                alert("Por favor, complete todos los campos.");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append("nombre", nombre);
+            formData.append("salario", salario);
+
+            fetch("insertar_empleado.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                cerrarModal();
+                location.reload(); // Recargar la página para mostrar el nuevo empleado
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+    <style>
+        /* Estilos para el modal */
+        #modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        #modal-content {
+            background-color: white;
+            padding: 20px;
+            width: 300px;
+            margin: 15% auto;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <h1>Lista de Empleados</h1>
@@ -36,28 +88,37 @@ if ($result === false) {
             </tr>
         </thead>
         <tbody>
-            <?php
-            // Recorrer los resultados de la consulta y mostrarlos en la tabla
-            while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
-                echo "<tr>";
-                echo "<td>" . $row['Id'] . "</td>";
-                echo "<td>" . $row['Nombre'] . "</td>";
-                echo "<td>" . "$" . number_format($row['Salario'], 2) . "</td>"; // Formatear salario a dos decimales
-                echo "</tr>";
-            }
-            ?>
+            <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) { ?>
+                <tr>
+                    <td><?= $row['Id'] ?></td>
+                    <td><?= $row['Nombre'] ?></td>
+                    <td>$<?= number_format($row['Salario'], 2) ?></td>
+                </tr>
+            <?php } ?>
         </tbody>
     </table>
 
     <br>
 
-    <button>Insertar Empleado</button>
+    <button onclick="abrirModal()">Insertar Empleado</button>
+
+    <!-- Modal -->
+    <div id="modal">
+        <div id="modal-content">
+            <h2>Nuevo Empleado</h2>
+            <label>Nombre:</label>
+            <input type="text" id="nombre"><br><br>
+            <label>Salario:</label>
+            <input type="number" id="salario" step="0.01"><br><br>
+            <button onclick="insertarEmpleado()">Guardar</button>
+            <button onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
 
 </body>
 </html>
 
 <?php
-// Liberar la consulta y cerrar la conexión
 sqlsrv_free_stmt($result);
 sqlsrv_close($conn);
 ?>
